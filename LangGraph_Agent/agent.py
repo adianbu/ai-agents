@@ -3,6 +3,7 @@ from langchain_community.llms import LlamaCpp
 from langchain_community.chat_models import ChatOllama
 # Alternative: use OpenAI-compatible API client
 from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import InMemorySaver
 
 def get_weather(city: str) -> str:  
     """Get weather for a given city."""
@@ -16,6 +17,9 @@ model = ChatOpenAI(
     model="qwen2.5-coder-32b-instruct",               # Use the actual model name in ML Studio
     temperature=0.1,
 )
+
+
+checkpointer = InMemorySaver()
 
 # Option 2: Using Ollama (if you're running Qwen through Ollama)
 # model = ChatOllama(
@@ -36,12 +40,22 @@ model = ChatOpenAI(
 agent = create_react_agent(
     model=model,
     tools=[get_weather],  
-    prompt="You are a helpful assistant with access to tools."
+    checkpointer=checkpointer,
 )
-
 # Run the agent
-result = agent.invoke(
-    {"messages": [{"role": "user", "content": "what is the weather in sf"}]}
+config = {"configurable": {"thread_id": "1"}}
+sf_response = agent.invoke(
+    {"messages": [{"role": "user", "content": "what is the weather in sf"}]},
+    config  
 )
+ny_response = agent.invoke(
+    {"messages": [{"role": "user", "content": "what about new york?"}]},
+    config
+)
+# # Run the agent
+# result = agent.invoke(
+#     {"messages": [{"role": "user", "content": "what is the weather in sf"}]}
+# )
 
-print(result)
+print("sf",sf_response)
+print("ny",ny_response)
